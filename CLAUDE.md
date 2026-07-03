@@ -1,63 +1,76 @@
-# PROYECT-WATCH — Reloj mecánico interactivo (explosionado por scroll)
+# PROYECT-WATCH — Asistente visual de despiece y reparación de relojes mecánicos
 
 ## Estado del proyecto
 
 **Beta interna de pruebas.** No se despliega en público, no se indexa, no tiene
 analítica ni dominio propio todavía. El objetivo de esta fase es validar el
-concepto (UX + viabilidad técnica del 3D) antes de invertir en contenido final
-o en un modelo 3D de producción. Cualquier `index.html` que se publique debe
-llevar `<meta name="robots" content="noindex,nofollow">` mientras dure la beta.
+concepto con mockups desechables antes de invertir en la implementación real.
+Cualquier `index.html` que se publique debe llevar
+`<meta name="robots" content="noindex,nofollow">` mientras dure la beta.
 
-## Idea del producto
+## Idea del producto (pivote v2)
 
-Una página web de una sola vista (scrollytelling) que explica el funcionamiento
-de un **reloj mecánico de pulsera/bolsillo**. Al hacer scroll hacia abajo, el
-reloj (renderizado en 3D) se "explosiona": sus piezas se separan unas de otras
-en el espacio, en el orden en que participan en la cadena cinemática (de la
-fuente de energía a la indicación de la hora). Cada pieza que se separa:
+> Historial: la v1 era una página educativa genérica tipo scrollytelling
+> ("cómo funciona un reloj"). El usuario la reorientó a un caso de uso más
+> concreto y útil: **identificar y diagnosticar el reloj de una persona real**.
 
-1. Se aísla visualmente (cámara/foco/resaltado) de las demás.
-2. Muestra un panel de texto sincronizado con el scroll: qué es, cómo funciona
-   y **por qué es importante** para que el reloj funcione.
-3. Vuelve a integrarse en el conjunto al continuar el scroll, dando paso a la
-   siguiente pieza.
+Una página web sencilla donde cualquier persona:
 
-Al llegar al final, el reloj se recompone completo y funcionando (agujas en
-movimiento, volante oscilando).
+1. **Introduce/selecciona su reloj** (marca, modelo o tipo de mecanismo).
+2. Ve su reloj **descompuesto en todas sus piezas** de forma interactiva.
+3. Por cada pieza puede ver:
+   - Qué es y para qué sirve.
+   - Por qué es importante para el funcionamiento del reloj.
+   - **Síntomas típicos de avería** en esa pieza (para saber si el problema
+     de su reloj viene de ahí).
+   - **Qué revisar** para diagnosticarla.
+   - **Disponibilidad del repuesto** (fácil de encontrar / específica del
+     fabricante / requiere relojero especializado).
 
-## Decisiones ya tomadas con el usuario
+El objetivo final es que alguien con un reloj mecánico que falla pueda
+entender **qué pieza es probablemente la culpable y qué tan fácil es
+conseguir el repuesto**, no solo aprender teoría de relojería en abstracto.
+El contenido educativo de la v1 (qué hace cada pieza) se mantiene y es la
+base de todo lo demás — simplemente se reutiliza con un propósito práctico.
 
-- **Visual: 3D real con Three.js**, no una ilustración 2D plana. La cámara y
-  la posición de las piezas se controlan a partir del progreso de scroll.
-- **Tipo de reloj: mecánico de pulsera/bolsillo** (con volante, áncora,
-  escape, barrilete de muelle real), no un reloj de pared con péndulo.
-- Contenido en **español**.
+## Decisiones y su evolución
 
-## Stack técnico
+- **Tipo de reloj de referencia:** mecánico de pulsera/bolsillo (con volante,
+  áncora, escape, barrilete de muelle real). Se mantiene.
+- **Contenido en español.** Se mantiene.
+- **Visual — revisado:** la v1 decidió 3D real con Three.js para un reloj
+  genérico. Con el pivote a "tu reloj real", un único modelo 3D genérico deja
+  de tener sentido: cada marca/modelo tiene un aspecto distinto y no existe
+  (ni es realista modelar ahora) un `.glb` por cada reloj que un usuario
+  pueda tener. Para el **Moca** se adapta a un **diagrama interactivo 2D**
+  (HTML/CSS/JS, sin dependencias): un esquema tipo "concentrador y radios"
+  (hub-and-spoke) que agrupa las piezas por categoría funcional y permite
+  entrar al detalle de cada una. Es fiel al espíritu "descomponer piezas
+  para diagnosticar", más rápido de construir/iterar, y no depende de tener
+  arte 3D por modelo de reloj. Si más adelante se decide dar soporte real a
+  modelos concretos con imágenes/planos reales, se puede sustituir el
+  esquema genérico por uno específico sin cambiar la lógica de datos.
+- **"Selector de reloj" en esta fase:** no hay una base de datos real de
+  relojes. El Moca ofrece 3 arquetipos genéricos (manual con segundero,
+  manual sin segundero, automático) que ya bastan para demostrar que
+  distintos relojes muestran distintas piezas (p. ej. el automático añade
+  el rotor de cuerda automática). Una base de datos real de marcas/calibres
+  es trabajo de una fase posterior, no de este mockup.
 
-- **Vite + TypeScript** — bundler y dev server, cero framework de UI pesado
-  (no hace falta React/Vue para una sola vista narrativa).
-- **Three.js** — escena 3D, geometría de las piezas, cámara, luces.
-- **GSAP + ScrollTrigger** — vincular el progreso de scroll con: posición de
-  cámara, posición "explosionada" de cada pieza, y aparición/desaparición de
-  los paneles de texto. Es el estándar de facto para scrollytelling con
-  Three.js y evita reinventar interpolación/easing/timelines a mano.
-- Sin backend. Sitio 100% estático (se podrá desplegar en cualquier hosting
-  estático el día que se decida salir de beta).
+## Proceso de trabajo: Moca (mockup) antes que implementación real
 
-### Por qué no un modelo GLTF de producción todavía
+Este proyecto se construye en dos pistas separadas a propósito:
 
-No tenemos (ni hemos modelado) un archivo 3D real de un reloj. Para no
-bloquear el mockup en la disponibilidad de un modelo:
-
-- **Fase de mockup**: el reloj se construye con **geometría procedural de
-  Three.js** (cilindros, toroides, engranajes generados por código) que
-  representan cada pieza de forma esquemática pero reconocible y
-  correctamente proporcionada/posicionada.
-- Cuando el concepto esté validado, esa geometría procedural se puede
-  sustituir por un `.glb` real pieza por pieza (ver `public/models/`), sin
-  tocar la lógica de scroll/explosión: la escena identifica las piezas por
-  `id`, no por cómo están construidas.
+- **`mockup/`** — prototipos desechables, HTML autocontenido (todo inline,
+  sin build, abrible localmente con doble clic o `file://`). Sirven para
+  iterar rápido la idea y el UX con el usuario antes de comprometerse a una
+  arquitectura. Cada mockup relevante se enseña como enlace de previsualización
+  antes de tocar nada de contenido/UI "de verdad".
+- **`src/`** (Vite + TypeScript) — el scaffold de la implementación real,
+  pensado originalmente para la v1 (3D + scroll). Se mantiene en el repo pero
+  **en pausa** hasta que el Moca de la v2 esté validado; en ese momento se
+  decide si se reconstruye sobre este scaffold o se simplifica (ya que la v2
+  probablemente no necesite Three.js/GSAP si el diagrama 2D funciona bien).
 
 ## Estructura de carpetas
 
@@ -65,84 +78,76 @@ bloquear el mockup en la disponibilidad de un modelo:
 PROYECT-WATCH/
 ├── CLAUDE.md
 ├── README.md
-├── index.html
+├── mockup/
+│   └── index.html        # Moca autocontenido de la v2 (selector + despiece + reparación)
+├── index.html             # entrada de la v1 (Vite), en pausa
 ├── package.json
 ├── vite.config.ts
 ├── tsconfig.json
 ├── public/
-│   └── models/          # aquí irán los .glb reales cuando existan
+│   └── models/            # .glb reales, solo si retomamos la vía 3D
 ├── src/
-│   ├── main.ts          # punto de entrada
+│   ├── main.ts
 │   ├── style.css
 │   ├── data/
-│   │   └── components.ts   # fuente única de verdad del contenido educativo
-│   ├── scene/
-│   │   ├── ClockScene.ts   # setup de Three.js (cámara, luces, render loop)
-│   │   ├── watchParts.ts   # construcción procedural de cada pieza
-│   │   └── explode.ts      # lógica de "explosión" ligada al scroll
+│   │   └── components.ts  # contenido educativo v1 (sin datos de reparación todavía)
+│   ├── scene/              # escena Three.js v1, en pausa
 │   └── ui/
-│       └── ScrollNarrative.ts  # paneles de texto sincronizados con el scroll
 └── .claude/
     └── skills/
         └── reloj-interactivo/SKILL.md
 ```
 
-## Modelo de contenido (`src/data/components.ts`)
+## Modelo de contenido
 
-Cada pieza del reloj es un objeto con esta forma (ver el archivo para el
-detalle real, ya poblado con las ~20 piezas de un reloj mecánico):
+Cada pieza tiene, como mínimo:
 
-```ts
-interface ClockComponent {
-  id: string;              // identificador único, referenciado por la escena 3D
-  name: string;             // nombre de la pieza
-  category:
-    | "energia"        // almacenan/liberan la energía (muelle, barrilete)
-    | "transmision"    // tren de ruedas que transmite el movimiento
-    | "regulacion"     // escape + áncora + volante: el "corazón" que regula el tiempo
-    | "estructura"     // platina, puentes, rubíes, caja
-    | "visualizacion"; // esfera, agujas, cristal
-  shortDescription: string; // qué es / qué hace, 1-3 frases
-  importance: string;       // por qué es crítica para el funcionamiento del reloj
-  explodeOrder: number;     // orden de aparición en el recorrido de scroll
-  relatedIds?: string[];    // piezas con las que interactúa directamente
-}
+```
+id, name, category (energia | transmision | regulacion | estructura | visualizacion),
+shortDescription, importance,
+commonIssues (síntomas típicos de avería),
+checkPoints (qué revisar para diagnosticarla),
+availability ("alta" | "media" | "baja", + nota explicando por qué)
 ```
 
-Esta lista es la única fuente de verdad del contenido: tanto la narrativa
-(texto) como la escena 3D (qué piezas existen, en qué orden se explosionan)
-se derivan de aquí. Añadir o corregir contenido educativo se hace editando
-este archivo, no repartiendo texto por la UI.
+En el Moca (`mockup/index.html`) estos datos viven embebidos en el propio
+HTML como JS plano, para que el archivo sea autosuficiente. Cuando se valide
+el UX, este contenido se traslada/fusiona a `src/data/components.ts` (que hoy
+solo tiene `shortDescription`/`importance`, sin los campos de reparación) para
+que vuelva a haber una única fuente de verdad.
 
 ## Fases del proyecto
 
-- **Fase 0 (esta entrega):** scaffolding del proyecto, `CLAUDE.md`, skill de
-  Claude Code, y el contenido educativo de las piezas ya redactado en
-  `components.ts`. Sin escena 3D todavía.
-- **Fase 1 — Mockup:** construir el reloj con geometría procedural, sin
-  scroll todavía; validar que la composición, el layout de piezas y la
-  cámara se ven bien estáticos.
-- **Fase 2 — Scroll storytelling:** conectar GSAP ScrollTrigger para
-  explosionar/recomponer piezas y sincronizar los paneles de texto.
-- **Fase 3 — Pulido:** materiales/iluminación, `prefers-reduced-motion`,
-  responsive/móvil, rendimiento (instancing de piezas repetidas como
-  tornillos/rubíes).
-- **Fase 4 — Contenido y sustitución de modelo:** revisar/ampliar textos,
-  y si se decide, sustituir la geometría procedural por un `.glb` real.
+- **Fase 0:** scaffolding v1, `CLAUDE.md`, skill de Claude Code, contenido
+  educativo inicial. *(hecho)*
+- **Fase 1 — Pivote a v2 + Moca:** reorientar el producto a "identifica tu
+  reloj → despiece → diagnóstico y disponibilidad de repuestos"; construir
+  el mockup HTML autocontenido en `mockup/index.html` y revisarlo con el
+  usuario. *(en curso)*
+- **Fase 2 — Iterar el Moca:** ajustar UX/contenido/estructura según feedback
+  directo sobre el mockup, sin backend ni build todavía.
+- **Fase 3 — Implementación real:** una vez validado el Moca, decidir stack
+  definitivo (probablemente Vite + TS sin necesidad de Three.js si el 2D
+  convence) e implementarlo sobre `src/`, fusionando el contenido.
+- **Fase 4 — Contenido y datos reales:** ampliar de arquetipos genéricos a
+  marcas/calibres reales si el producto lo justifica; búsqueda/disponibilidad
+  real de repuestos (posible integración externa, fuera de alcance ahora).
 
 ## Convenciones
 
-- Todo el contenido visible (textos, nombres de piezas) en español.
+- Todo el contenido visible en español.
 - Commits descriptivos en español o inglés, consistentes con el resto.
 - No añadir analítica, tracking ni servicios externos mientras sea beta.
 - No hay backend ni base de datos: todo el estado vive en el cliente.
-- Verificar cambios visuales arrancando el dev server (`npm run dev`) y
-  mirando el resultado en el navegador — no basta con que compile.
+- Los mockups de `mockup/` deben poder abrirse como archivo local
+  (`file://`) sin servidor ni build — cero dependencias externas, todo
+  inline.
+- Verificar cambios visuales abriendo el archivo/arrancando el dev server —
+  no basta con que el código sea válido.
 
 ## La Skill del proyecto
 
-`.claude/skills/reloj-interactivo/SKILL.md` es la skill que dirige la
-construcción y el mantenimiento de esta web. Se invoca para cualquier
-trabajo sobre este proyecto (añadir piezas, ajustar la animación de scroll,
-tocar contenido). Contiene el checklist de "pieza completa" y las reglas de
-la escena 3D para que el resultado sea consistente entre sesiones.
+`.claude/skills/reloj-interactivo/SKILL.md` dirige la construcción y el
+mantenimiento de esta web, incluyendo el flujo de trabajo "Moca primero,
+implementación después" y el checklist de "pieza completa" (ahora con los
+campos de reparación/disponibilidad).

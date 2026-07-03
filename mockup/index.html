@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Diagnostica tu reloj — Moca</title>
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --panel: #ffffff;
+    --ink: #1c1b19;
+    --ink-soft: #5b5850;
+    --line: #e2ddd2;
+    --accent: #b5842a;
+    --energia: #b5842a;
+    --transmision: #3a6ea5;
+    --regulacion: #b0413e;
+    --estructura: #6b6a63;
+    --visualizacion: #3f8f6f;
+    --alta: #2e8b57;
+    --media: #b58a1a;
+    --baja: #b0413e;
+    --shadow: 0 8px 24px rgba(30, 25, 15, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15140f;
+      --panel: #201e18;
+      --ink: #f1efe8;
+      --ink-soft: #b9b3a4;
+      --line: #37342a;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  header.top {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  header.top h1 {
+    font-size: 1.05rem;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+  header.top .badge {
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ---------- Pantalla 1: selector ---------- */
+  .intro { max-width: 560px; margin: 0 auto 2.5rem; text-align: center; }
+  .intro h2 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .intro p { color: var(--ink-soft); line-height: 1.5; }
+  .watch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .watch-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.25rem;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .watch-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .watch-card h3 { margin: 0.25rem 0 0.35rem; font-size: 1.05rem; }
+  .watch-card p { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+  .watch-card .tag {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+  }
+  .search-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .search-row input {
+    flex: 1;
+    padding: 0.65rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    font-size: 0.95rem;
+  }
+  .search-row button {
+    padding: 0.65rem 1.1rem;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ---------- Pantalla 2: despiece ---------- */
+  .despiece-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .despiece-header .back {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+  }
+  .despiece-header h2 { margin: 0; font-size: 1.2rem; }
+
+  .layout { display: grid; grid-template-columns: minmax(260px, 460px) 1fr; gap: 2rem; align-items: start; }
+  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+
+  .hub-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; max-width: 460px; margin: 0 auto; }
+  .hub-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hub-lines line { stroke: var(--line); stroke-width: 0.6; }
+
+  .hub-center {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 26%; aspect-ratio: 1/1; border-radius: 50%;
+    background: var(--panel); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--ink-soft);
+    box-shadow: var(--shadow); padding: 0.5rem;
+  }
+
+  .hub-node {
+    position: absolute; transform: translate(-50%, -50%);
+    width: 30%; aspect-ratio: 1/1; border-radius: 50%;
+    border: 2px solid var(--cat-color, var(--accent));
+    background: var(--panel);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 0.72rem; font-weight: 600; line-height: 1.15;
+    padding: 0.4rem; cursor: pointer; color: var(--ink);
+    box-shadow: var(--shadow);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .hub-node:hover { transform: translate(-50%, -50%) scale(1.06); }
+  .hub-node.selected { background: var(--cat-color, var(--accent)); color: #fff; }
+
+  .category-panel h3 { margin: 0 0 0.25rem; font-size: 1rem; }
+  .category-panel .hint { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 1rem; }
+  .piece-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .piece-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 0.65rem 0.9rem; cursor: pointer;
+  }
+  .piece-row:hover { border-color: var(--accent); }
+  .piece-row .name { font-weight: 600; font-size: 0.92rem; }
+  .piece-row .avail {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 0.15rem 0.5rem; border-radius: 999px; color: #fff; white-space: nowrap;
+  }
+  .avail-alta { background: var(--alta); }
+  .avail-media { background: var(--media); }
+  .avail-baja { background: var(--baja); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.25rem; font-size: 0.72rem; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* ---------- Panel de detalle ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    display: none; align-items: stretch; justify-content: flex-end; z-index: 20;
+  }
+  .overlay.active { display: flex; }
+  .detail-panel {
+    width: min(420px, 100%); background: var(--panel); height: 100%;
+    padding: 1.75rem; overflow-y: auto; box-shadow: var(--shadow);
+  }
+  .detail-panel .close {
+    background: none; border: none; color: var(--ink-soft); font-size: 0.85rem;
+    cursor: pointer; padding: 0; margin-bottom: 1rem;
+  }
+  .detail-panel .cat-badge {
+    display: inline-block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: #fff; padding: 0.2rem 0.55rem; border-radius: 999px; margin-bottom: 0.6rem;
+  }
+  .detail-panel h2 { margin: 0 0 0.75rem; font-size: 1.3rem; }
+  .detail-panel h4 { margin: 1.1rem 0 0.4rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); }
+  .detail-panel p { line-height: 1.5; margin: 0; }
+  .detail-panel ul { margin: 0.25rem 0 0; padding-left: 1.1rem; line-height: 1.5; }
+  .avail-block { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; }
+
+  footer.notice {
+    max-width: 920px; margin: 3rem auto 0; padding: 0 1.5rem; color: var(--ink-soft);
+    font-size: 0.75rem; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Diagnostica tu reloj</h1>
+  <span class="badge">Moca interno — no publicado</span>
+</header>
+
+<main>
+
+  <!-- ===================== PANTALLA 1: SELECTOR ===================== -->
+  <section id="screen-selector" class="screen active">
+    <div class="intro">
+      <h2>¿Qué reloj tienes?</h2>
+      <p>Selecciona el tipo de mecanismo que más se parece al tuyo para ver
+      todas sus piezas, qué hace cada una, y qué mirar si algo no funciona
+      bien.</p>
+    </div>
+
+    <div class="search-row">
+      <input id="search-input" list="watch-options" placeholder="Escribe tu marca/modelo (ej. automático, manual...)" />
+      <datalist id="watch-options"></datalist>
+      <button id="search-btn">Buscar</button>
+    </div>
+
+    <div class="watch-grid" id="watch-grid"></div>
+  </section>
+
+  <!-- ===================== PANTALLA 2: DESPIECE ===================== -->
+  <section id="screen-despiece" class="screen">
+    <div class="despiece-header">
+      <button class="back" id="back-btn">‹ Cambiar de reloj</button>
+      <h2 id="watch-title"></h2>
+      <span></span>
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="hub-wrap">
+          <svg class="hub-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line x1="50" y1="50" x2="50" y2="10.4"></line>
+            <line x1="50" y1="50" x2="87.6" y2="37.8"></line>
+            <line x1="50" y1="50" x2="73.3" y2="82"></line>
+            <line x1="50" y1="50" x2="26.7" y2="82"></line>
+            <line x1="50" y1="50" x2="12.4" y2="37.8"></line>
+          </svg>
+          <div class="hub-center">Tu reloj<br>(pulsa una categoría)</div>
+          <div id="hub-nodes"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="category-panel">
+        <h3 id="category-title">Elige una categoría del diagrama</h3>
+        <p class="hint" id="category-hint">Cada categoría agrupa las piezas que cumplen una misma función dentro del mecanismo. Pulsa una pieza para ver su diagnóstico.</p>
+        <div class="piece-list" id="piece-list"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="notice">
+  Mockup de validación de producto. Los arquetipos de reloj son genéricos
+  (no corresponden a una marca concreta) y la disponibilidad de repuestos es
+  orientativa, no un catálogo real de proveedores.
+</footer>
+
+<!-- ===================== PANEL DE DETALLE ===================== -->
+<div class="overlay" id="overlay">
+  <div class="detail-panel">
+    <button class="close" id="close-panel">✕ Cerrar</button>
+    <span class="cat-badge" id="detail-cat"></span>
+    <h2 id="detail-name"></h2>
+    <p id="detail-desc"></p>
+
+    <h4>Por qué es importante</h4>
+    <p id="detail-importance"></p>
+
+    <h4>Síntomas de avería habituales</h4>
+    <ul id="detail-issues"></ul>
+
+    <h4>Qué revisar</h4>
+    <p id="detail-check"></p>
+
+    <h4>Disponibilidad del repuesto</h4>
+    <div class="avail-block">
+      <span class="avail" id="detail-avail-badge"></span>
+    </div>
+    <p id="detail-avail-note" style="margin-top:0.5rem;"></p>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   DATOS — catálogo de piezas y arquetipos de reloj.
+   Esto es contenido de mockup: al validarse pasa a src/data/components.ts
+   ====================================================================== */
+
+const CATEGORIES = {
+  energia:       { label: "Energía",       color: "var(--energia)" },
+  transmision:   { label: "Transmisión",   color: "var(--transmision)" },
+  regulacion:    { label: "Regulación",    color: "var(--regulacion)" },
+  estructura:    { label: "Estructura",    color: "var(--estructura)" },
+  visualizacion: { label: "Visualización", color: "var(--visualizacion)" },
+};
+
+const PARTS = {
+  corona: {
+    name: "Corona", category: "energia",
+    shortDescription: "El botón giratorio en el lateral de la caja. Al girarlo se da cuerda al muelle real; al tirar de él, se ajustan la hora y, en algunos modelos, la fecha.",
+    importance: "Es el único punto de entrada de energía e información desde el exterior. Sin ella no habría forma de recargar el muelle ni de poner el reloj en hora.",
+    commonIssues: ["Gira sin dar cuerda ni hacer clic", "Se sale o queda floja al tirar de ella", "Entra humedad por la corona"],
+    checkPoints: "Comprobar que engrana bien en cada posición (cuerda / fecha / hora) y que la junta tórica no está reseca o agrietada.",
+    availability: "alta", availabilityNote: "Pieza bastante genérica por diámetro de tubo y rosca; fácil de encontrar en tallas estándar.",
+  },
+  "tren-cuerda": {
+    name: "Tren de cuerda (trinquete)", category: "energia",
+    shortDescription: "Conjunto de piñones y un trinquete que transforma el giro de la corona en el enrollado del muelle dentro del barrilete, permitiendo el giro en un solo sentido.",
+    importance: "El trinquete impide que el muelle se destense de golpe al soltar la corona: sin él, toda la energía acumulada se liberaría de forma incontrolada.",
+    commonIssues: ["La corona gira libre y no carga el muelle", "Ruido de carraca anómalo al dar cuerda"],
+    checkPoints: "Verificar que el trinquete sujeta el resorte antirretorno sin saltar dientes.",
+    availability: "media", availabilityNote: "Suele requerir la pieza específica del fabricante del calibre, no es intercambiable entre marcas.",
+  },
+  "muelle-real": {
+    name: "Muelle real (resorte principal)", category: "energia",
+    shortDescription: "Una cinta metálica muy larga enrollada en espiral dentro del barrilete. Almacena energía mecánica al tensarse y la libera lentamente al distenderse.",
+    importance: "Es la fuente de energía de todo el reloj: sin él ninguna otra pieza tiene fuerza para moverse. La reserva de marcha depende de cuánta energía puede almacenar.",
+    commonIssues: ["El reloj se para en pocas horas (reserva de marcha muy corta)", "Muelle roto o deformado"],
+    checkPoints: "Dar cuerda completa y medir cuánto tiempo sigue funcionando; un muelle sano suele dar entre 30 y 70 horas según el calibre.",
+    availability: "media", availabilityNote: "Repuesto genérico por medidas (grosor/anchura/longitud), pero hay que acertar la referencia exacta.",
+  },
+  barrilete: {
+    name: "Barrilete", category: "energia",
+    shortDescription: "Tambor cilíndrico dentado que contiene el muelle real en su interior y transmite su fuerza, ya suavizada, al resto del tren de ruedas.",
+    importance: "Convierte la energía bruta y desigual del muelle en un giro constante y controlado; es el primer eslabón que reparte esa fuerza por todo el mecanismo.",
+    commonIssues: ["Ruido o fricción al liberar energía", "Tapa suelta o dientes desgastados"],
+    checkPoints: "Comprobar que el diente engrana limpio con la rueda de centro y que el tambor no baila en su eje.",
+    availability: "baja", availabilityNote: "Pieza específica del calibre; normalmente se compra como conjunto barrilete + muelle.",
+  },
+  rotor: {
+    name: "Rotor (masa oscilante)", category: "energia",
+    shortDescription: "Media luna metálica pivotada libremente que gira con el movimiento de la muñeca y, a través de un tren reductor, da cuerda automáticamente al muelle real.",
+    importance: "Permite que el reloj se mantenga con cuerda sin manipular la corona a diario; es lo que hace \"automático\" a un reloj automático.",
+    commonIssues: ["Ruido de roce o vibración al mover la muñeca", "El reloj no coge cuerda solo aunque se use a diario"],
+    checkPoints: "Comprobar que gira libremente 360° sin rozar la platina ni el fondo de la caja.",
+    availability: "baja", availabilityNote: "Pieza específica del calibre y sensible a golpes; sustitución delicada.",
+  },
+  "rueda-central": {
+    name: "Rueda de centro (minutero)", category: "transmision",
+    shortDescription: "Primera rueda del tren de ruedas tras el barrilete. Da una vuelta completa por hora y mueve directamente la aguja de los minutos.",
+    importance: "Fija la referencia temporal principal del reloj: toda la reducción posterior y la lectura de la hora dependen de su giro exacto.",
+    commonIssues: ["El minutero se atasca o salta", "Juego excesivo entre dientes"],
+    checkPoints: "Verificar la alineación del eje y que el piñón no esté doblado.",
+    availability: "baja", availabilityNote: "Pieza específica del calibre.",
+  },
+  "rueda-intermedia": {
+    name: "Rueda intermedia (tercera rueda)", category: "transmision",
+    shortDescription: "Rueda de paso que conecta la rueda de centro con la rueda de segundos, aumentando progresivamente la velocidad de giro.",
+    importance: "Sin esta reducción intermedia, el salto de velocidad sería demasiado brusco para transmitirse con precisión.",
+    commonIssues: ["Pérdida de amplitud de marcha", "Parón intermitente por piñón desgastado"],
+    checkPoints: "Revisar dientes y piñón bajo lupa en busca de melladuras.",
+    availability: "baja", availabilityNote: "Pieza específica del calibre.",
+  },
+  "rueda-segundos": {
+    name: "Rueda de segundos", category: "transmision",
+    shortDescription: "Gira una vez por minuto y mueve la aguja de los segundos.",
+    importance: "Es la parte del tren que gira más rápido antes del escape, por lo que amplifica cualquier error de fabricación.",
+    commonIssues: ["El segundero se traba o vibra en vez de avanzar suave", "Eje doblado tras un golpe"],
+    checkPoints: "Comprobar que el eje gira concéntrico sin rozar el puente.",
+    availability: "baja", availabilityNote: "Pieza específica del calibre.",
+  },
+  "rueda-escape": {
+    name: "Rueda de escape", category: "regulacion",
+    shortDescription: "Última rueda del tren, con dientes de perfil especial. En vez de girar libremente, es frenada y liberada diente a diente por el áncora.",
+    importance: "Es la válvula que deja escapar la energía del muelle en pulsos regulares en vez de un flujo continuo: sin ella el reloj no marcaría el tiempo.",
+    commonIssues: ["El reloj se para de golpe", "Dientes desgastados u oxidados"],
+    checkPoints: "Observar bajo microscopio si el perfil de los dientes está limpio y sin oxidación.",
+    availability: "baja", availabilityNote: "Muy específica del calibre; suele ser de las piezas más caras del repuesto.",
+  },
+  ancora: {
+    name: "Áncora (pallet fork)", category: "regulacion",
+    shortDescription: "Pieza en forma de horquilla con dos rubíes que engranan alternativamente con la rueda de escape, bloqueándola y soltándola en cada oscilación del volante.",
+    importance: "Es el intermediario entre el tren de ruedas y el volante: transforma sus oscilaciones en el \"tic-tac\" que libera la energía paso a paso.",
+    commonIssues: ["El reloj se para o pierde mucho tiempo", "Ruido de escape irregular"],
+    checkPoints: "Comprobar el juego lateral de la horquilla y el estado de los rubíes de las paletas.",
+    availability: "baja", availabilityNote: "Componente de precisión, normalmente pieza original del fabricante.",
+  },
+  volante: {
+    name: "Volante (balance)", category: "regulacion",
+    shortDescription: "Una rueda con peso concentrado en el borde que oscila hacia adelante y atrás sobre su propio eje, como el péndulo de un reloj de pared pero en horizontal.",
+    importance: "Es el oscilador que marca el ritmo real del reloj: toda la precisión depende de que sus oscilaciones sean extremadamente regulares.",
+    commonIssues: ["El reloj adelanta o atrasa mucho", "Amplitud de oscilación muy baja", "Eje doblado por un golpe"],
+    checkPoints: "Medir amplitud y frecuencia con un timegrafo; revisar que gire perfectamente plano.",
+    availability: "baja", availabilityNote: "Casi siempre pieza original del fabricante.",
+  },
+  espiral: {
+    name: "Espiral (muelle del balance)", category: "regulacion",
+    shortDescription: "Un muelle finísimo enrollado en espiral, unido al eje del volante, que lo empuja de vuelta al centro tras cada oscilación.",
+    importance: "Convierte al volante en un oscilador isócrono: cada oscilación dura lo mismo independientemente de su amplitud, la base de que un reloj mecánico sea preciso.",
+    commonIssues: ["El reloj varía mucho su marcha según la posición en que se deja", "Espiral deformada tras un golpe o exposición a un imán"],
+    checkPoints: "Comprobar visualmente que las espiras están centradas y no se tocan; probar con un desmagnetizador.",
+    availability: "baja", availabilityNote: "Extremadamente delicada; requiere reemplazo por un relojero profesional.",
+  },
+  raqueta: {
+    name: "Raqueta (regulador)", category: "regulacion",
+    shortDescription: "Pequeña palanca que modifica la longitud efectiva de la espiral, adelantando o atrasando ligeramente el ritmo del volante.",
+    importance: "Es el único ajuste fino de precisión del reloj: permite compensar pequeñas variaciones para que ni adelante ni atrase en exceso.",
+    commonIssues: ["El reloj mantiene un adelanto/atraso constante", "Raqueta atascada por suciedad"],
+    checkPoints: "Mover ligeramente hacia +/- y comprobar el cambio de marcha en un timegrafo.",
+    availability: "alta", availabilityNote: "Pieza robusta; rara vez hay que sustituirla, solo reajustarla.",
+  },
+  rubies: {
+    name: "Rubíes (jewels)", category: "estructura",
+    shortDescription: "Pequeños cojinetes de rubí sintético, extremadamente duros y pulidos, en los puntos donde los ejes giran más rápido o soportan más carga.",
+    importance: "Reducen la fricción y el desgaste a niveles que el metal contra metal no podría igualar; sin ellos el reloj perdería precisión rápidamente.",
+    commonIssues: ["Rubí agrietado o saltado tras un golpe fuerte", "Aumento de fricción y pérdida de amplitud"],
+    checkPoints: "Inspección con lupa en los puntos de apoyo de los ejes de mayor velocidad.",
+    availability: "media", availabilityNote: "Repuestos genéricos por tamaño estándar, pero el montaje requiere un relojero.",
+  },
+  platina: {
+    name: "Platina", category: "estructura",
+    shortDescription: "La placa base sobre la que se apoyan y alinean todos los ejes de ruedas del movimiento.",
+    importance: "Es el esqueleto del reloj: fija la posición relativa exacta de cada rueda. Cualquier desalineación aquí impide que los engranajes engranen bien.",
+    commonIssues: ["Roscas de tornillo dañadas", "Deformación tras un golpe o caída fuerte"],
+    checkPoints: "Comprobar planitud y que todos los ejes asienten sin holgura.",
+    availability: "baja", availabilityNote: "Pieza estructural específica del calibre; rara vez se sustituye sola.",
+  },
+  puentes: {
+    name: "Puentes", category: "estructura",
+    shortDescription: "Piezas atornilladas sobre la platina que sujetan el otro extremo de cada eje, dejando las ruedas \"flotando\" entre platina y puente.",
+    importance: "Sujetan los ejes con la rigidez necesaria para soportar miles de oscilaciones por hora sin desalinearse.",
+    commonIssues: ["Tornillo de fijación perdido", "Puente doblado que genera fricción extra"],
+    checkPoints: "Revisar que el juego axial de cada rueda es el especificado por el fabricante.",
+    availability: "media", availabilityNote: "Depende de la disponibilidad del fabricante para ese calibre.",
+  },
+  cristal: {
+    name: "Cristal", category: "estructura",
+    shortDescription: "La cubierta transparente que protege la esfera y las agujas del exterior.",
+    importance: "Protege el mecanismo de polvo, humedad y golpes sin impedir la lectura de la hora.",
+    commonIssues: ["Rayado o astillado", "Empañamiento interno por junta deteriorada"],
+    checkPoints: "Revisar la junta del cristal y su ajuste en el bisel.",
+    availability: "alta", availabilityNote: "Los cristales redondos estándar son fáciles de encontrar; los de forma específica, más difíciles.",
+  },
+  caja: {
+    name: "Caja", category: "estructura",
+    shortDescription: "El envoltorio exterior que aloja y protege todo el movimiento, la esfera y el cristal.",
+    importance: "Es la última defensa del mecanismo frente a golpes, agua y polvo, y sostiene el conjunto sobre la muñeca.",
+    commonIssues: ["Arañazos, golpes u oxidación en el fondo o la corona", "Entra agua (junta de estanqueidad degradada)"],
+    checkPoints: "Prueba de estanqueidad y revisión de todas las juntas.",
+    availability: "media", availabilityNote: "Depende de si el fabricante sigue teniendo esa referencia en catálogo.",
+  },
+  esfera: {
+    name: "Esfera (dial)", category: "visualizacion",
+    shortDescription: "La cara visible del reloj, con los índices u números de las horas, sobre la que se desplazan las agujas.",
+    importance: "Es la interfaz entre todo el mecanismo interno y quien lee la hora: por preciso que sea el movimiento, la información solo sirve si se lee con claridad.",
+    commonIssues: ["Manchas de humedad u óxido", "Índices despegados"],
+    checkPoints: "Revisar por delante y por detrás en busca de humedad o corrosión.",
+    availability: "media", availabilityNote: "Depende de si el fabricante sigue produciendo esferas para ese modelo.",
+  },
+  "aguja-horario": {
+    name: "Aguja horaria", category: "visualizacion",
+    shortDescription: "La aguja más corta; da una vuelta completa a la esfera cada 12 horas.",
+    importance: "Traduce el giro rápido interno del tren de ruedas a la escala de tiempo que realmente importa: las horas del día.",
+    commonIssues: ["Aguja torcida o que roza otra aguja/el cristal", "Pintura luminiscente degradada"],
+    checkPoints: "Comprobar que ninguna aguja roza la esfera ni el cristal al girar.",
+    availability: "alta", availabilityNote: "Genérica por talla de eje en la mayoría de calibres comunes.",
+  },
+  "aguja-minutero": {
+    name: "Aguja minutera", category: "visualizacion",
+    shortDescription: "Solidaria al eje de la rueda de centro; da una vuelta completa cada hora.",
+    importance: "Es la lectura de tiempo más usada habitualmente y la referencia que sincroniza el movimiento de la aguja horaria.",
+    commonIssues: ["Aguja torcida o que roza otra aguja/el cristal", "Se ha soltado del eje (juego excesivo)"],
+    checkPoints: "Comprobar que encaja firme en el eje y que gira sin rozar.",
+    availability: "alta", availabilityNote: "Genérica por talla de eje en la mayoría de calibres comunes.",
+  },
+  "aguja-segundero": {
+    name: "Aguja segundera", category: "visualizacion",
+    shortDescription: "Da una vuelta completa cada minuto; es donde se aprecia visualmente el \"tic-tac\" del escape.",
+    importance: "Es la evidencia visual directa de que el escape está funcionando: su avance a saltos regulares refleja el estado de todo el mecanismo de regulación.",
+    commonIssues: ["Avanza a trompicones o se para visiblemente", "Roza el cristal o la esfera"],
+    checkPoints: "Observar si el avance es uniforme salto a salto, sin arrastres.",
+    availability: "media", availabilityNote: "Más específica de diseño que las otras agujas.",
+  },
+};
+
+const WATCHES = [
+  {
+    id: "manual-3-agujas",
+    name: "Manual de 3 agujas (genérico)",
+    tag: "Cuerda manual · con segundero",
+    description: "El arquetipo más común de reloj mecánico sencillo: hay que darle cuerda a mano y tiene horario, minutero y segundero.",
+    exclude: ["rotor"],
+  },
+  {
+    id: "manual-2-agujas",
+    name: "Manual sencillo sin segundero (genérico)",
+    tag: "Cuerda manual · sin segundero",
+    description: "Un mecanismo aún más simple: cuerda manual, solo horario y minutero, sin rueda ni aguja de segundos.",
+    exclude: ["rotor", "rueda-segundos", "aguja-segundero"],
+  },
+  {
+    id: "automatico-3-agujas",
+    name: "Automático de 3 agujas (genérico)",
+    tag: "Cuerda automática · con segundero",
+    description: "Se carga solo con el movimiento de la muñeca gracias a un rotor, además de poder darle cuerda manualmente.",
+    exclude: [],
+  },
+];
+
+/* ======================================================================
+   ESTADO Y RENDER
+   ====================================================================== */
+
+let currentWatch = null;
+let currentCategory = null;
+
+const el = (id) => document.getElementById(id);
+
+function partsForWatch(watch) {
+  return Object.entries(PARTS).filter(([id]) => !watch.exclude.includes(id));
+}
+
+function renderWatchGrid() {
+  const grid = el("watch-grid");
+  grid.innerHTML = "";
+  WATCHES.forEach((w) => {
+    const card = document.createElement("div");
+    card.className = "watch-card";
+    card.innerHTML = `<div class="tag">${w.tag}</div><h3>${w.name}</h3><p>${w.description}</p>`;
+    card.addEventListener("click", () => openWatch(w));
+    grid.appendChild(card);
+  });
+
+  const options = el("watch-options");
+  options.innerHTML = WATCHES.map((w) => `<option value="${w.name}">`).join("");
+}
+
+function openWatch(watch) {
+  currentWatch = watch;
+  currentCategory = null;
+  el("watch-title").textContent = watch.name;
+  el("screen-selector").classList.remove("active");
+  el("screen-despiece").classList.add("active");
+  renderHub();
+  renderLegend();
+  renderCategoryPanel();
+}
+
+function renderHub() {
+  const wrap = el("hub-nodes");
+  wrap.innerHTML = "";
+  const positions = {
+    energia:       { left: "50%",   top: "10.4%" },
+    transmision:   { left: "87.6%", top: "37.8%" },
+    regulacion:    { left: "73.3%", top: "82%" },
+    estructura:    { left: "26.7%", top: "82%" },
+    visualizacion: { left: "12.4%", top: "37.8%" },
+  };
+  const available = partsForWatch(currentWatch);
+  Object.entries(CATEGORIES).forEach(([catId, cat]) => {
+    const count = available.filter(([, p]) => p.category === catId).length;
+    if (count === 0) return;
+    const node = document.createElement("div");
+    node.className = "hub-node" + (currentCategory === catId ? " selected" : "");
+    node.style.setProperty("--cat-color", cat.color);
+    node.style.left = positions[catId].left;
+    node.style.top = positions[catId].top;
+    node.textContent = `${cat.label} (${count})`;
+    node.addEventListener("click", () => {
+      currentCategory = catId;
+      renderHub();
+      renderCategoryPanel();
+    });
+    wrap.appendChild(node);
+  });
+}
+
+function renderLegend() {
+  const legend = el("legend");
+  legend.innerHTML = Object.values(CATEGORIES)
+    .map((c) => `<span><i style="background:${c.color}"></i>${c.label}</span>`)
+    .join("");
+}
+
+function renderCategoryPanel() {
+  const title = el("category-title");
+  const hint = el("category-hint");
+  const list = el("piece-list");
+  list.innerHTML = "";
+
+  if (!currentCategory) {
+    title.textContent = "Elige una categoría del diagrama";
+    hint.textContent = "Cada categoría agrupa las piezas que cumplen una misma función dentro del mecanismo. Pulsa una pieza para ver su diagnóstico.";
+    return;
+  }
+
+  const cat = CATEGORIES[currentCategory];
+  title.textContent = cat.label;
+  hint.textContent = "Pulsa una pieza para ver qué es, por qué importa, y cómo diagnosticarla.";
+
+  partsForWatch(currentWatch)
+    .filter(([, p]) => p.category === currentCategory)
+    .forEach(([id, p]) => {
+      const row = document.createElement("div");
+      row.className = "piece-row";
+      row.innerHTML = `<span class="name">${p.name}</span><span class="avail avail-${p.availability}">${availabilityLabel(p.availability)}</span>`;
+      row.addEventListener("click", () => openDetail(id, p));
+      list.appendChild(row);
+    });
+}
+
+function availabilityLabel(level) {
+  return { alta: "Fácil de encontrar", media: "Disponibilidad media", baja: "Muy específica" }[level];
+}
+
+function openDetail(id, p) {
+  const cat = CATEGORIES[p.category];
+  el("detail-cat").textContent = cat.label;
+  el("detail-cat").style.background = cat.color;
+  el("detail-name").textContent = p.name;
+  el("detail-desc").textContent = p.shortDescription;
+  el("detail-importance").textContent = p.importance;
+  el("detail-issues").innerHTML = p.commonIssues.map((i) => `<li>${i}</li>`).join("");
+  el("detail-check").textContent = p.checkPoints;
+  el("detail-avail-badge").textContent = availabilityLabel(p.availability);
+  el("detail-avail-badge").className = "avail avail-" + p.availability;
+  el("detail-avail-note").textContent = p.availabilityNote;
+  el("overlay").classList.add("active");
+}
+
+function closeDetail() {
+  el("overlay").classList.remove("active");
+}
+
+function backToSelector() {
+  el("screen-despiece").classList.remove("active");
+  el("screen-selector").classList.add("active");
+  currentWatch = null;
+  currentCategory = null;
+}
+
+/* ======================================================================
+   EVENTOS
+   ====================================================================== */
+
+el("close-panel").addEventListener("click", closeDetail);
+el("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") closeDetail(); });
+el("back-btn").addEventListener("click", backToSelector);
+
+el("search-btn").addEventListener("click", () => {
+  const query = el("search-input").value.trim().toLowerCase();
+  const match = WATCHES.find((w) => w.name.toLowerCase().includes(query));
+  if (match) openWatch(match);
+  else alert("Este mockup solo tiene 3 arquetipos genéricos de ejemplo. Prueba con \"manual\" o \"automático\", o elige una tarjeta de abajo.");
+});
+el("search-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") el("search-btn").click();
+});
+
+renderWatchGrid();
+</script>
+
+</body>
+</html>

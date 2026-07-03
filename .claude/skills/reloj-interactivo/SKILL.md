@@ -1,73 +1,83 @@
 ---
 name: reloj-interactivo
-description: Dirige la construcción y el mantenimiento de la web interactiva del reloj mecánico de PROYECT-WATCH (escena 3D en Three.js que se explosiona por scroll con GSAP ScrollTrigger, y su contenido educativo). Usar para cualquier trabajo en este proyecto: añadir o corregir piezas del reloj, tocar la escena 3D, ajustar la narrativa de scroll, o avanzar de fase (mockup, scroll storytelling, pulido, contenido).
+description: Dirige la construcción y el mantenimiento de PROYECT-WATCH, la web donde un usuario identifica su reloj mecánico, lo ve descompuesto en piezas, y por cada pieza obtiene diagnóstico de avería y disponibilidad de repuesto. Usar para cualquier trabajo en este proyecto: iterar el mockup (`mockup/`), añadir o corregir piezas/contenido de reparación, o avanzar hacia la implementación real.
 ---
 
 # Skill: reloj-interactivo
 
-Esta skill es la referencia de trabajo para PROYECT-WATCH. Lee primero
-`CLAUDE.md` en la raíz del repo para el contexto completo (idea de producto,
-stack, fases). Esta skill se centra en el "cómo" del día a día.
+Lee primero `CLAUDE.md` en la raíz del repo para el contexto completo (idea
+de producto, decisiones y su historial, fases). Esta skill se centra en el
+"cómo" del día a día.
 
-## Regla de oro: `src/data/components.ts` es la fuente de verdad
+## El producto, en una frase
 
-Todo lo que existe en la escena 3D y en la narrativa de scroll debe
-corresponder a una entrada de `clockComponents` en ese archivo. Nunca:
+El usuario elige/identifica su reloj → lo ve descompuesto en piezas →
+por cada pieza: qué es, por qué importa, qué síntomas indican que está
+averiada, qué revisar, y qué tan fácil es conseguir el repuesto.
 
-- Añadas una pieza a la escena 3D sin su entrada de contenido correspondiente.
-- Escribas texto narrativo directamente en un componente de UI: debe vivir en
-  `shortDescription` / `importance` de `components.ts`.
+## Flujo de trabajo: Moca antes que implementación
+
+Este proyecto avanza en mockups desechables antes de comprometer arquitectura:
+
+1. Todo cambio de producto/UX se prueba primero en `mockup/index.html`
+   (HTML autocontenido, sin build, abrible en local).
+2. Cada mockup relevante se enseña al usuario (enlace de previsualización)
+   **antes** de tocar `src/` o de plantear un deploy.
+3. Solo cuando el usuario valida el mockup se traslada ese diseño/contenido
+   a la implementación real bajo `src/`.
+4. No dupliques esfuerzo: mientras se itera el mockup, no sincronices cada
+   cambio con `src/data/components.ts` — eso se hace una vez al final de
+   cada ronda de validación, no en cada iteración del mockup.
+
+## Regla de oro: una única fuente de verdad de contenido en cada pista
+
+- Mientras se itera el mockup, los datos de piezas viven embebidos como JS
+  plano dentro de `mockup/index.html`.
+- En la implementación real, `src/data/components.ts` es la fuente de verdad
+  (hoy solo tiene contenido educativo v1; le faltan los campos de reparación
+  hasta que se migre el mockup validado).
+- Nunca escribas texto narrativo o de diagnóstico directamente en un
+  componente de UI: debe vivir en el objeto de datos de la pieza.
 
 ## Checklist de "pieza completa"
 
-Antes de dar por terminada una pieza nueva o modificada, comprobar:
+Cada pieza (en el mockup o en `components.ts`) necesita:
 
-1. Existe en `clockComponents` con `id`, `category`, `explodeOrder` correctos
-   (el orden debe respetar la cadena cinemática: energía → transmisión →
-   regulación → estructura/visualización).
-2. `shortDescription` explica QUÉ es/hace en 1-3 frases, en español, sin
-   jerga innecesaria.
-3. `importance` explica POR QUÉ es crítica para que el reloj funcione — no
-   repetir la descripción, aportar el "y si no estuviera, pasaría esto".
-4. Tiene representación geométrica en `src/scene/watchParts.ts` (en fase de
-   mockup, construida con primitivas de Three.js) posicionada de forma
-   coherente con las piezas vecinas (`relatedIds`).
-5. Tiene una posición "explosionada" definida en `src/scene/explode.ts`
-   (dirección y distancia a la que se aleja del conjunto al llegar su turno
-   de scroll).
-6. Se ha comprobado visualmente con `npm run dev`, no solo que compile.
+1. `id`, `name`, `category` correctos (`energia`, `transmision`,
+   `regulacion`, `estructura`, `visualizacion`).
+2. `shortDescription`: qué es/hace, 1-3 frases, español, sin jerga innecesaria.
+3. `importance`: por qué es crítica — no repetir la descripción, explicar
+   el "y si fallara, pasaría esto".
+4. `commonIssues`: síntomas típicos de avería de esa pieza, tal como los
+   notaría el dueño del reloj (p. ej. "el reloj se para en pocas horas"),
+   no jerga de taller pura.
+5. `checkPoints`: qué revisaría un relojero para diagnosticarla.
+6. `availability`: nivel (`alta`/`media`/`baja`) + nota de por qué (pieza
+   genérica por medidas vs. específica del calibre vs. requiere montaje
+   profesional).
+7. Comprobado visualmente abriendo el archivo/arrancando el dev server, no
+   solo que el código sea válido.
 
-## Cómo funciona la sincronización scroll → escena (Fase 2 en adelante)
+## Reglas del diagrama interactivo (mockup v2)
 
-- El progreso de scroll (0 a 1) es la única variable de estado de la
-  narrativa. Todo se deriva de ella: no usar temporizadores ni animaciones
-  independientes del scroll salvo micro-detalles decorativos (p. ej. el
-  volante oscilando de fondo).
-- `explodeOrder` determina en qué tramo de scroll le toca a cada pieza
-  separarse y mostrar su panel. Repartir el rango 0-1 en tantos tramos como
-  `orderedComponents.length`, con transiciones suaves entre tramos
-  (no cortes bruscos).
-- Cuando una pieza tiene el foco, las piezas no relacionadas deben atenuarse
-  (opacidad/emisión reducida) para dirigir la atención, y las piezas en
-  `relatedIds` pueden permanecer resaltadas como contexto.
-- Respetar `prefers-reduced-motion`: si está activo, sustituir las
-  transiciones animadas por cambios instantáneos entre estados, sin eliminar
-  la funcionalidad.
-
-## Fases y qué hacer en cada una
-
-Seguir el orden de `CLAUDE.md` § Fases del proyecto. No adelantar trabajo de
-pulido (Fase 3) o sustitución de modelo real (Fase 4) mientras el mockup
-(Fase 1) no esté validado con el usuario — este es un proyecto beta que se
-itera en pasos cortos y revisables, no un desarrollo de una sola pasada.
+- El esquema es un **diagrama 2D de concentrador y radios** (hub-and-spoke):
+  un nodo central ("tu reloj") rodeado por 5 nodos de categoría; al elegir
+  una categoría se listan sus piezas; al elegir una pieza se abre el panel
+  de detalle. No se necesita 3D ni geometría realista para este propósito.
+- El "reloj" seleccionado (arquetipo) determina qué piezas existen: filtrar
+  la lista según sus flags (`hasSegundero`, `hasRotor`, etc.), no mostrar
+  piezas que ese arquetipo no tiene.
+- Añadir un arquetipo de reloj nuevo es más barato que añadir piezas nuevas:
+  reutiliza el catálogo de piezas existente y solo decide qué subconjunto
+  aplica.
 
 ## Restricciones del proyecto (no negociables sin confirmarlo con el usuario)
 
-- Es una **beta privada de pruebas**: no añadir analítica, no desplegar en un
-  dominio público, mantener `<meta name="robots" content="noindex,nofollow">`
-  en `index.html`.
+- **Beta privada de pruebas**: no analítica, no deploy a dominio público,
+  `noindex` en cualquier `index.html` publicado.
+- Los mockups deben funcionar como archivo local (`file://`), sin servidor
+  ni dependencias externas (CDNs, fuentes remotas, etc.) — todo inline.
 - Sin backend ni persistencia: todo vive en el cliente.
 - Contenido siempre en español.
-- No introducir un framework de UI (React/Vue/etc.) ni librerías de estado
-  para una sola vista narrativa — mantener la solución en Vite + TS +
-  Three.js + GSAP tal como está decidido en `CLAUDE.md`.
+- No introducir un framework de UI (React/Vue/etc.) para el mockup — HTML/
+  CSS/JS plano es suficiente y mantiene el archivo autocontenido.
