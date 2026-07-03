@@ -1,0 +1,21 @@
+{
+  "name": "proyect-watch",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Beta interna: web interactiva que explica el funcionamiento de un reloj mecanico explosionando sus piezas en 3D al hacer scroll.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.169.0",
+    "gsap": "^3.12.5"
+  },
+  "devDependencies": {
+    "@types/three": "^0.169.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

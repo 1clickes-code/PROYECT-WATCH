@@ -1,0 +1,23 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0c0f;
+  --fg: #eaeaea;
+  --accent: #c9a24b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+
+#app {
+  min-height: 100vh;
+}
